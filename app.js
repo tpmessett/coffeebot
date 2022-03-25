@@ -135,6 +135,18 @@ app.action({ action_id: 'addToCart' },
     }
   });
 
+//add item with extra to users cart
+app.action({action_id: 'selectedExtra'},
+  async ({ body, ack, logger, say }) => {
+    await ack()
+    try {
+      console.log(body)
+    }
+    catch (error) {
+      logger.error(error);
+    }
+  })
+
 app.command("/menu", async ({ command, ack, say }) => {
     try {
       await ack();
