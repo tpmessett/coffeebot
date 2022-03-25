@@ -143,7 +143,6 @@ module.exports = {
     );
 
     const json = await response.json();
-    console.log(json.data)
     return json
   },
   createCart: async function (items) {
@@ -168,7 +167,6 @@ module.exports = {
         orderItems: items
       },
     });
-    console.log(data)
     const response = await fetch(
       'https://graph-qa.api.slerpdemo.com/v1/graphql',
       {
@@ -240,6 +238,47 @@ module.exports = {
       },
     });
 
+    const response = await fetch(
+      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      {
+        method: 'post',
+        body: data,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + process.env.API_KEY,
+          'User-Agent': 'Node',
+        },
+      }
+    );
+
+    const json = await response.json();
+    return json
+  },
+  addToCart: async function (id, items) {
+    console.log("updating cart")
+    const data = JSON.stringify({
+      query: `
+      mutation updateSlerpCart(
+          $cartId:ID!,
+          $orderItems: OrderItemParams
+        ) {
+          updateSlerpCart(
+            address: "56 old street, London, e1",
+            cartId:$cartId,
+            fulfillmentType: "pickup",
+            fulfillmentTime: "asap",
+            fulfillmentDate: "${date}",
+            orderItems:$orderItems
+          ) {
+            id
+          }
+        }
+      `,
+      variables: {
+        cartId: id,
+        orderItems: items,
+      },
+    });
     const response = await fetch(
       'https://graph-qa.api.slerpdemo.com/v1/graphql',
       {
