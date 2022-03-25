@@ -115,66 +115,36 @@ module.exports = {
       return block
     })
   },
-  createCart: function(id, user){
+  createCart: function(id, modifiers){
     const items = [{
       productVariantId: `${id}`,
       quantity: 1,
-      appliedModifiers: []
+      appliedModifiers: modifiers
     }]
     const cart = gql.createCart(items)
       return cart.then(function(result){
       const cartId = result.data.createSlerpCart.id
-      //console.log(cartId)
-      const details = gql.updateDetails(cartId, user)
-      return details.then(function(result){
-        //console.log(result)
-        const payment = gql.createPayment(cartId)
-      return payment.then(function(result){
-        //console.log(result.data.payViaWeb.sessionData.url)
-         return result.data.payViaWeb.sessionData.url
-      })
-      })
+      return cartId
     })
   },
-  addToCart: function(id, user){
+  addToCart: function(id, modifiers, cartId){
     const items = [{
       productVariantId: `${id}`,
       quantity: 1,
-      appliedModifiers: []
+      appliedModifiers: modifiers
     }]
-    const cart = gql.createCart(items)
+    const cart = gql.addToCart(cartId, items)
       return cart.then(function(result){
-      const cartId = result.data.createSlerpCart.id
-      //console.log(cartId)
-      const details = gql.updateDetails(cartId, user)
-      return details.then(function(result){
-        //console.log(result)
-        const payment = gql.createPayment(cartId)
-      return payment.then(function(result){
-        //console.log(result.data.payViaWeb.sessionData.url)
-         return result.data.payViaWeb.sessionData.url
-      })
-      })
+      console.log(result)
+      return result
     })
   },
-  checkout: function(id, user){
-    const items = [{
-      productVariantId: `${id}`,
-      quantity: 1,
-      appliedModifiers: []
-    }]
-    const cart = gql.createCart(items)
-      return cart.then(function(result){
-      const cartId = result.data.createSlerpCart.id
-      //console.log(cartId)
-      const details = gql.updateDetails(cartId, user)
-      return details.then(function(result){
-        //console.log(result)
-        const payment = gql.createPayment(cartId)
-      return payment.then(function(result){
-        //console.log(result.data.payViaWeb.sessionData.url)
-         return result.data.payViaWeb.sessionData.url
-      })
+  checkout: function(cart, user){
+    const details = gql.updateDetails(cart, user)
+      return details.then(function(){
+        const payment = gql.createPayment(cart)
+        return payment.then(function(result){
+          return result.data.payViaWeb.sessionData.url
       })
     })
   }
