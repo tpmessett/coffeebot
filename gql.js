@@ -95,6 +95,41 @@ module.exports = {
     const json = await response.json();
     return json
   },
+  getCart: async function (id) {
+    console.log("getting cart")
+    const data = JSON.stringify({
+      query: `
+        query GetCart {
+          carts(where: {id: {_eq: "${id}"}}) {
+            order_items {
+              product_variant_id
+              applied_modifiers {
+                id
+                quantity
+              }
+              quantity
+            }
+          }
+        }
+        `,
+    });
+
+    const response = await fetch(
+      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      {
+        method: 'post',
+        body: data,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + process.env.API_KEY,
+          'User-Agent': 'Node',
+        },
+      }
+    );
+
+    const json = await response.json();
+    return json
+  },
   getExtras: async function (id) {
     console.log("checking extras")
     const data = JSON.stringify({

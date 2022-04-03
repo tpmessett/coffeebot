@@ -133,10 +133,25 @@ module.exports = {
       quantity: 1,
       appliedModifiers: modifiers
     }]
-    const cart = gql.addToCart(cartId, items)
+    const currentCart = gql.getCart(cartId)
+    currentCart.then(function(result){
+      console.log(result.data.carts[0].order_items)
+      const currentItems = result.data.carts[0].order_items
+      currentItems.forEach(item => {
+        const itemObject = {
+          productVariantId: item.product_variant_id,
+          quantity: item.quantity,
+          appliedModifiers: item.applied_modifiers
+        }
+        console.log(itemObject)
+        items.push(itemObject)
+        console.log(items)
+      })
+      const cart = gql.addToCart(cartId, items)
       return cart.then(function(result){
       console.log(result)
       return result
+    })
     })
   },
   checkout: function(cart, user){

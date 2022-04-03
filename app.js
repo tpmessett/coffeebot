@@ -114,7 +114,8 @@ app.action({ action_id: 'addToCart' },
       const itemId = body.actions[0].value
       const modifiers = []
       const extras = await requests.getExtras(itemId)
-      if (extras.blocks.length == 1 && cartId == "") {
+      if (extras.blocks.length == 1 && cartId === "") {
+        console.log(`check create: ${cartId}`)
         const cart = requests.createCart(itemId, modifiers)
         Promise.resolve(cart).then(function(value){
           cartId = value
@@ -122,6 +123,7 @@ app.action({ action_id: 'addToCart' },
           say(anythingElse)
         })
       } else if (extras.blocks.length == 1 && cartId != "") {
+        console.log(`check add: ${cartId}`)
         cart = requests.addToCart(itemId, modifiers, cartId)
         Promise.resolve(cart).then(function(){
           say(anythingElse)
