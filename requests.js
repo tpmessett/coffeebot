@@ -76,7 +76,9 @@ module.exports = {
         }
       } else {
       modifierGroups.forEach(group => {
-        //console.log(group)
+        console.log(group)
+        const groupId = group.modifier_group.id
+        console.log(groupId)
         const groupDesc = {
             type: "section",
             text: {
@@ -90,6 +92,7 @@ module.exports = {
         modifiers.forEach(modifier => {
           const vat = modifier.modifier.vat / 100
            const price = modifier.modifier.price * (1 + vat)
+           console.log(modifier)
            const description = {
             type: "section",
             text: {
@@ -104,7 +107,7 @@ module.exports = {
                 text: "Select",
                 emoji: true
               },
-              value: `${id}.${modifier.id}`,
+              value: `${id}.${groupId}.${modifier.modifier.id}`,
               action_id: "selectedExtra"
             },
           }

@@ -77,13 +77,26 @@ app.action({ action_id: 'checkoutnow' },
         }
         const payLink = requests.checkout(cartId, userInfo)
           Promise.resolve(payLink).then(function(value) {
-           say(`OK, click here to pay: ${value}`)
+           // say(`OK, click here to pay: ${value}`)
+           console.log(value)
+           say({
+              blocks: [
+                  {
+                    type: "section",
+                    text: {
+                      type: "mrkdwn",
+                      text: `*<${value}|OK, click here to pay>*`,
+                    }
+                  }
+                ]
+            })
            cartId = ""
            console.log(`did I reset cart? checking: ${cartId}`)
          })
       }
     catch (error) {
       logger.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
     }
   });
 
@@ -102,6 +115,7 @@ app.action({ action_id: 'anotherItem' },
     }
     catch (error) {
       logger.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
     }
   });
 
@@ -134,6 +148,7 @@ app.action({ action_id: 'addToCart' },
     }
     catch (error) {
       logger.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
     }
   });
 
@@ -142,7 +157,26 @@ app.action({action_id: 'selectedExtra'},
   async ({ body, ack, logger, say }) => {
     await ack()
     try {
-      console.log(body)
+      const result = body.actions[0].value.split('.')
+      const id = result[0]
+      const modifiers = {
+        modifierGroupId: result[1],
+        modifierId: result[2],
+        quantity: 1
+      }
+      if (cartId === "") {
+        const cart = requests.createCart(id, modifiers)
+        Promise.resolve(cart).then(function(value){
+          cartId = value
+          console.log(cartId)
+          say(anythingElse)
+        })
+      } else {
+        cart = requests.addToCart(id, modifiers)
+        Promise.resolve(cart).then(function(){
+          say(anythingElse)
+        })
+      }
     }
     catch (error) {
       logger.error(error);
@@ -157,17 +191,22 @@ app.command("/menu", async ({ command, ack, say }) => {
           say("Sorry we're closed right now")
         } else {
           const menu = await requests.showMenu();
+          cartId = ''
           say(menu);
         }
     } catch (error) {
       console.log("err")
       console.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
     }
 });
 
 //allows app to respond to payment requests made by text
 app.message(/(pay|checkout|done)/, async ({ body, client, logger, say }) => {
     try {
+      if(cartId === '') {
+        say("there is nothing in your cart, try asking for the menu first")
+      }
       const userId = body.event.user
         const user = await client.users.info({
           user: userId
@@ -190,13 +229,24 @@ app.message(/(pay|checkout|done)/, async ({ body, client, logger, say }) => {
         }
         const payLink = requests.checkout(cartId, userInfo)
           Promise.resolve(payLink).then(function(value) {
-           say(`Sure, click here to pay: ${value}`)
+           say({
+              blocks: [
+                  {
+                    type: "section",
+                    text: {
+                      type: "mrkdwn",
+                      text: `*<${value}|OK, click here to pay>*`,
+                    }
+                  }
+                ]
+            })
            cartId = ""
            console.log(`did I reset cart? checking: ${cartId}`)
          })
       }
     catch (error) {
       logger.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
     }
 })
 
@@ -212,6 +262,17 @@ app.message(/(hey|open|order|morning|afternoon|coffee|menu)/, async ({ command, 
     } catch (error) {
         console.log("err")
       console.error(error);
+    }
+});
+
+app.message(/(start again|clear cart|reset)/, async ({ command, say }) => {
+    try {
+      cartId = ''
+      say("OK let's start again...")
+    } catch (error) {
+        console.log("err")
+      console.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
     }
 });
 
