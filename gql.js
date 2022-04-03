@@ -229,8 +229,8 @@ module.exports = {
       }`,
       variables: {
         cartId: id,
-        cancelUrl: "https://www.slerp.com",
-        successUrl: "https://www.slerp.com"
+        cancelUrl: "https://app.slack.com/client/TB51E9V4M/D038A7S1F0Q",
+        successUrl: "https://app.slack.com/client/TB51E9V4M/D038A7S1F0Q"
       },
     });
 
@@ -248,6 +248,36 @@ module.exports = {
     );
 
     const json = await response.json();
+    return json
+  },
+  listenPayment: async function (id) {
+    console.log("listening for payment")
+    const data = JSON.stringify({
+      query: `
+      query getOrder {
+        orders(where:{cart_id:{_eq: "${id}"}}) {
+          transaction_id
+          status
+        }
+      }
+      `,
+    });
+
+    const response = await fetch(
+      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      {
+        method: 'post',
+        body: data,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + process.env.API_KEY,
+          'User-Agent': 'Node',
+        },
+      }
+    );
+
+    const json = await response.json();
+    console.log(json)
     return json
   },
   updateDetails: async function (id, user) {

@@ -1,5 +1,6 @@
 const { App } = require("@slack/bolt");
 const requests = require('./requests');
+const gql = require('./gql');
 require("dotenv").config();
 let cartId = ""
 // Initializes your app with your bot token and signing secret
@@ -79,13 +80,25 @@ app.action({ action_id: 'checkoutnow' },
           Promise.resolve(payLink).then(function(value) {
            // say(`OK, click here to pay: ${value}`)
            console.log(value)
+           console.log(`cart id: ${cartId}`)
            say({
               blocks: [
                   {
                     type: "section",
                     text: {
                       type: "mrkdwn",
-                      text: `*<${value}|OK, click here to pay>*`,
+                      "text": "OK, click the button to pay:"
+                    },
+                    accessory: {
+                      type: "button",
+                      text: {
+                        type: "plain_text",
+                        text: "Pay Now",
+                        emoji: true
+                      },
+                      value: `${cartId}`,
+                      url: `${value}`,
+                      action_id: "pay-click"
                     }
                   }
                 ]
@@ -180,6 +193,35 @@ app.action({action_id: 'selectedExtra'},
     }
     catch (error) {
       logger.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
+    }
+  })
+
+app.action({action_id: 'pay-click'},
+  async ({ body, ack, logger, say }) => {
+    await ack()
+    try {
+      const cart = body.actions[0].value
+      const started = Date.now()
+      pollOrder = setInterval(payment, 3000)
+      function payment() {
+        const paid = gql.listenPayment(cart)
+        Promise.resolve(paid).then(function(result){
+          console.log(result)
+          if(result.data.orders.length > 0) {
+            console.log(`result: ${result.data.orders}`)
+            clearInterval(pollOrder)
+          }
+          if (Date.now() - started > 300000) {
+            console.log("stop")
+            clearInterval(pollOrder);
+          }
+        })
+      }
+    }
+    catch (error) {
+      logger.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
     }
   })
 
@@ -235,7 +277,18 @@ app.message(/(pay|checkout|done)/, async ({ body, client, logger, say }) => {
                     type: "section",
                     text: {
                       type: "mrkdwn",
-                      text: `*<${value}|OK, click here to pay>*`,
+                      "text": "OK, click the button to pay:"
+                    },
+                    accessory: {
+                      type: "button",
+                      text: {
+                        type: "plain_text",
+                        text: "Pay Now",
+                        emoji: true
+                      },
+                      value: `${cartId}`,
+                      url: `${value}`,
+                      action_id: "pay-click"
                     }
                   }
                 ]
