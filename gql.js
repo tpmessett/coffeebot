@@ -230,7 +230,7 @@ module.exports = {
       variables: {
         cartId: id,
         cancelUrl: "https://app.slack.com/client/TB51E9V4M/D038A7S1F0Q",
-        successUrl: "https://app.slack.com/client/TB51E9V4M/D038A7S1F0Q"
+        successUrl: `https://slerpdemo.com/checkout_loading/${id}`
       },
     });
 
