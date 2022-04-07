@@ -48,13 +48,30 @@ module.exports = {
   getExtras: function (id) {
     const result = gql.getExtras(id)
     return result.then (function(extras) {
+      const add = {
+        // add gives a button, rework so when adding with extras the extras get stored in a const which is an array of objects
+        // when add is clicked it triggers that array to get put into the right place to go in the cart.
+        type: "actions",
+        "elements": [
+          {
+            "type": "button",
+            "text": {
+              "type": "plain_text",
+              "emoji": true,
+              "text": "Add to Cart"
+            },
+            style: "primary",
+            value: id,
+            action_id: "add"
+          }]
+        }
       let block = {
         blocks: [
           {
             type: "section",
             text: {
               type: "plain_text",
-              text: `Let me know what how you'd like your ${extras.data.product_variants[0].product.name}:`,
+              text: `Let me know how you'd like your ${extras.data.product_variants[0].product.name}:`,
               emoji: true
             }
           },
@@ -76,46 +93,76 @@ module.exports = {
         }
       } else {
       modifierGroups.forEach(group => {
-        console.log(group)
         const groupId = group.modifier_group.id
-        console.log(groupId)
-        const groupDesc = {
+        //console.log(group.modifier_group)
+        if(group.modifier_group.minimum === 1) {
+          console.log("one")
+          const groupDesc = {
             type: "section",
-            text: {
-              type: "plain_text",
-              text: `${group.modifier_group.name}:`,
-              emoji: true
+              text: {
+                type: "mrkdwn",
+                text: "Pick one from the list:"
+              },
+              accessory: {
+                type: "static_select",
+                placeholder: {
+                  type: "plain_text",
+                  text: `Select ${group.modifier_group.name}`,
+                  emoji: true
+                },
+                options: [],
+                action_id: "selectedExtra1"
+              }
             }
-          }
-        block.blocks.push(groupDesc)
-        const modifiers = group.modifier_group.modifier_assocs
-        modifiers.forEach(modifier => {
-          const vat = modifier.modifier.vat / 100
-           const price = modifier.modifier.price * (1 + vat)
-           console.log(modifier)
-           const description = {
-            type: "section",
-            text: {
-              type: "plain_text",
-              text: `${modifier.modifier.name} - £${price.toFixed(2)}`,
-              emoji: true
-            },
-            accessory: {
-              type: "button",
+          const modifiers = group.modifier_group.modifier_assocs
+          modifiers.forEach(modifier => {
+            const vat = modifier.modifier.vat / 100
+            const price = modifier.modifier.price * (1 + vat)
+            const description = {
               text: {
                 type: "plain_text",
-                text: "Select",
+                text: `${modifier.modifier.name} - £${price.toFixed(2)}`,
                 emoji: true
               },
-              value: `${id}.${groupId}.${modifier.modifier.id}`,
-              action_id: "selectedExtra"
-            },
-          }
-           block.blocks.push(description)
-        })
+              value: `${groupId}.${modifier.modifier.id}`
+            }
+            groupDesc.accessory.options.push(description)
+          })
+          block.blocks.push(groupDesc)
+        } else {
+          console.log("two")
+          const groupDesc = {
+            type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `Select ${group.modifier_group.name}`,
+              },
+              accessory: {
+                type: "checkboxes",
+                options: [],
+                action_id: "selectedExtra2"
+              }
+            }
+          const modifiers = group.modifier_group.modifier_assocs
+          modifiers.forEach(modifier => {
+            const vat = modifier.modifier.vat / 100
+            const price = modifier.modifier.price * (1 + vat)
+            const description = {
+              text: {
+                type: "plain_text",
+                text: `${modifier.modifier.name} - £${price.toFixed(2)}`,
+                emoji: true
+              },
+              value: `${groupId}.${modifier.modifier.id}`
+            }
+            groupDesc.accessory.options.push(description)
+          })
+          block.blocks.push(groupDesc)
+        }
       })
+      block.blocks.push(add)
     }
-      return block
+    return block
     })
   },
   createCart: function(id, modifiers){
@@ -131,6 +178,7 @@ module.exports = {
     })
   },
   addToCart: function(id, modifiers, cartId){
+    console.log(`cart: ${cartId}`)
     const items = [{
       productVariantId: `${id}`,
       quantity: 1,
@@ -138,9 +186,11 @@ module.exports = {
     }]
     const currentCart = gql.getCart(cartId)
     currentCart.then(function(result){
-      console.log(result.data.carts[0].order_items)
+      //console.log(result.data.carts[0].order_items)
+      //console.log(result)
       const currentItems = result.data.carts[0].order_items
       currentItems.forEach(item => {
+        console.log(item.applied_modifiers)
         const itemObject = {
           productVariantId: item.product_variant_id,
           quantity: item.quantity,

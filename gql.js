@@ -4,6 +4,41 @@ const store = "1dc13cfa-b411-433c-b58a-0ef5866c391a"
 const merchant = "2ba090b2-d4dc-4fd1-ba5c-9e0b73586673"
 const date = new Date().toISOString().split('T')[0]
 module.exports = {
+  getStoreInfo: async function () {
+    console.log("Getting Store Info")
+    const data = JSON.stringify({
+      query: `
+        query StoreInfo {
+          stores(where: {id: {_eq: "${store}"}}) {
+            settings
+          }
+        }
+        `,
+    });
+
+    const response = await fetch(
+      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      {
+        method: 'post',
+        body: data,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + process.env.API_KEY,
+          'User-Agent': 'Node',
+        },
+      }
+    );
+
+    const json = await response.json();
+    console.log(json.prep_mode)
+    if(json.data.stores[0].settings.prep_mode === "busy"){
+      return json.data.stores[0].settings.busy_preparation_time
+    } else if (json.data.stores[0].settings.prep_mode === "moderate") {
+      return json.data.stores[0].settings.moderate_preparation_time
+    } else {
+      return json.data.stores[0].settings.quiet_preparation_time
+    }
+  },
   getMenu: async function () {
     console.log("getting menu")
     const data = JSON.stringify({
@@ -104,7 +139,8 @@ module.exports = {
             order_items {
               product_variant_id
               applied_modifiers {
-                id
+                modifier_group_id
+                modifier_id
                 quantity
               }
               quantity
@@ -132,6 +168,7 @@ module.exports = {
   },
   getExtras: async function (id) {
     console.log("checking extras")
+    console.log(id)
     const data = JSON.stringify({
       query: `
         query GetExtras {
@@ -152,10 +189,12 @@ module.exports = {
                     name
                     vat
                     sku
-
+                    }
                   }
-
-                  }
+                  maximum
+                  minimum
+                  minimum_enabled
+                  maximum_enabled
                 }
               }
             }
@@ -359,7 +398,42 @@ module.exports = {
 
     const json = await response.json();
     return json
-  }
- }
+  },
+  getProdStats: async function () {
+    console.log("checking product stats")
+    const data = JSON.stringify({
+      query: `
+        query getMerchantProductsSummary {
+          products: view_merchant_product_summary(where: {merchant: {slug: {_eq: "origincoffee"}}}, order_by: {total_count: desc}, limit: 5) {
+            total_count
+            total_amount
+            slug
+            name
+            id
+            featured
+            archived_at
+            merchant_id
+          }
+        }
+        `,
+    });
+
+    const response = await fetch(
+      'https://partner.api.slerp.com/v1/graphql',
+      {
+        method: 'post',
+        body: data,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + process.env.STATS_KEY,
+          'User-Agent': 'Node',
+        },
+      }
+    );
+
+    const json = await response.json();
+    return json.data.products
+  },
+}
 
 

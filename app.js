@@ -3,6 +3,7 @@ const requests = require('./requests');
 const gql = require('./gql');
 require("dotenv").config();
 let cartId = ""
+let modifiers = []
 // Initializes your app with your bot token and signing secret
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -79,8 +80,6 @@ app.action({ action_id: 'checkoutnow' },
         const payLink = requests.checkout(cartId, userInfo)
           Promise.resolve(payLink).then(function(value) {
            // say(`OK, click here to pay: ${value}`)
-           console.log(value)
-           console.log(`cart id: ${cartId}`)
            say({
               blocks: [
                   {
@@ -135,22 +134,22 @@ app.action({ action_id: 'anotherItem' },
 // add the selected item to the users cart
 app.action({ action_id: 'addToCart' },
   async ({ body, ack, logger, say }) => {
-    console.log(`cart id: ${cartId}`)
+    modifiers = []
+    productId = body.actions[0].value
     await ack();
     try {
       const itemId = body.actions[0].value
-      const modifiers = []
       const extras = await requests.getExtras(itemId)
       if (extras.blocks.length == 1 && cartId === "") {
         console.log(`check create: ${cartId}`)
         const cart = requests.createCart(itemId, modifiers)
         Promise.resolve(cart).then(function(value){
           cartId = value
-          console.log(cartId)
           say(anythingElse)
         })
       } else if (extras.blocks.length == 1 && cartId != "") {
         console.log(`check add: ${cartId}`)
+        console.log(modifiers)
         cart = requests.addToCart(itemId, modifiers, cartId)
         Promise.resolve(cart).then(function(){
           say(anythingElse)
@@ -166,27 +165,58 @@ app.action({ action_id: 'addToCart' },
   });
 
 //add item with extra to users cart
-app.action({action_id: 'selectedExtra'},
+app.action({action_id: 'selectedExtra1'},
   async ({ body, ack, logger, say }) => {
     await ack()
     try {
-      const result = body.actions[0].value.split('.')
-      const id = result[0]
-      const modifiers = {
-        modifierGroupId: result[1],
-        modifierId: result[2],
+      const result = body.actions[0].selected_option.value.split('.')
+      console.log(result)
+      modifierPush(result)
+    }
+    catch (error) {
+      logger.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
+    }
+  })
+
+app.action({action_id: 'selectedExtra2'},
+  async ({ body, ack, logger, say }) => {
+    await ack()
+    try {
+      const result = body.actions[0].selected_options[0].value.split('.')
+      modifierPush(result)
+    }
+    catch (error) {
+      logger.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
+    }
+  })
+
+const modifierPush = (result) => {
+  const modifier = {
+        modifierGroupId: result[0],
+        modifierId: result[1],
         quantity: 1
       }
+      modifiers.push(modifier)
+}
+
+app.action({action_id: 'add'},
+  async ({ body, ack, logger, say }) => {
+    await ack()
+    try {
+      const id = body.actions[0].value
       if (cartId === "") {
         const cart = requests.createCart(id, modifiers)
         Promise.resolve(cart).then(function(value){
           cartId = value
-          console.log(cartId)
+          modifiers = []
           say(anythingElse)
         })
       } else {
-        cart = requests.addToCart(id, modifiers)
+        cart = requests.addToCart(id, modifiers, cartId)
         Promise.resolve(cart).then(function(){
+          modifiers = []
           say(anythingElse)
         })
       }
@@ -207,12 +237,18 @@ app.action({action_id: 'pay-click'},
       function payment() {
         const paid = gql.listenPayment(cart)
         Promise.resolve(paid).then(function(result){
-          console.log(result)
-          if(result.data.orders.length > 0) {
-            console.log(`result: ${result.data.orders}`)
+          if(result.data.orders[0].status.toLowerCase() === 'accepted') {
+            const timeline = gql.getStoreInfo()
+            Promise.resolve(timeline).then(function(result){
+              say(`Great, your order has been accepted and will be ready in ${result} minutes`)
+            })
             clearInterval(pollOrder)
           }
-          if (Date.now() - started > 300000) {
+          if(result.data.orders[0].status.toLowerCase() === 'rejected') {
+            say("Ahh it looks like we can't fulfill your order right now, sorry, please do order again another time.")
+            clearInterval(pollOrder)
+          }
+          if (Date.now() - started > 600000) {
             console.log("stop")
             clearInterval(pollOrder);
           }
@@ -303,7 +339,7 @@ app.message(/(pay|checkout|done)/, async ({ body, client, logger, say }) => {
     }
 })
 
-app.message(/(hey|open|order|morning|afternoon|coffee|menu)/, async ({ command, say }) => {
+app.message(/(hey|open|order|morning|afternoon|coffee|menu)/i, async ({ command, say }) => {
     try {
       const open = await requests.checkOpen()
         if (open.data.getValidStore == null || open.data.getValidStore == []) {
@@ -318,10 +354,36 @@ app.message(/(hey|open|order|morning|afternoon|coffee|menu)/, async ({ command, 
     }
 });
 
-app.message(/(start again|clear cart|reset)/, async ({ command, say }) => {
+app.message(/(start again|clear cart|reset)/i, async ({ command, say }) => {
     try {
       cartId = ''
       say("OK let's start again...")
+    } catch (error) {
+        console.log("err")
+      console.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
+    }
+});
+
+app.message(/(slerp stand for|slerp meaning|slerp mean)/i, async ({ command, say }) => {
+    try {
+      say("SLERP stands for Simple Language ERP")
+    } catch (error) {
+        console.log("err")
+      console.error(error);
+      say("hmm, something went wrong, sorry. Try again?")
+    }
+});
+
+app.message(/(most popular|best seller)/i, async ({ command, say}) => {
+  try {
+      const response = gql.getProdStats()
+      say("Ok here are the top 5:")
+      Promise.resolve(response).then(function(topFive) {
+         for (let i = 0; i < topFive.length; i++) {
+           say(`${i+1}) ${topFive[i].name} - ${topFive[i].total_count} sold`)
+         }
+      })
     } catch (error) {
         console.log("err")
       console.error(error);
