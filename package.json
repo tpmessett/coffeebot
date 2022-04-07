@@ -6,7 +6,8 @@
   },
   "dependencies": {
     "@slack/bolt": "^3.10.0",
-    "node-fetch": "2"
+    "node-fetch": "2",
+    "nodemon": "^2.0.15"
   },
   "devDependencies": {
     "dotenv": "^16.0.0",
