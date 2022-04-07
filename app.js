@@ -1,5 +1,7 @@
 const { App } = require("@slack/bolt");
 const requests = require('./requests');
+const express = require('express');
+const expressApp = express();
 const gql = require('./gql');
 require("dotenv").config();
 let cartId = ""
@@ -399,4 +401,14 @@ app.message(/(most popular|best seller)/i, async ({ command, say}) => {
   await app.start(process.env.PORT || port);
   console.log(`⚡️ Slack Bolt app is running on port ${port}!`);
 })();
+
+expressApp.set('port', (process.env.PORT || 8000));
+
+//For avoidong Heroku $PORT error
+expressApp.get('/', function(request, response) {
+    var result = 'App is running'
+    response.send(result);
+}).listen(expressApp.get('port'), function() {
+    console.log('App is running, server is listening on port ', expressApp.get('port'));
+});
 
