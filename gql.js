@@ -17,7 +17,7 @@ module.exports = {
     });
 
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -74,7 +74,7 @@ module.exports = {
     });
 
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -115,7 +115,7 @@ module.exports = {
     });
 
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -151,7 +151,7 @@ module.exports = {
     });
 
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -204,7 +204,7 @@ module.exports = {
     });
 
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -242,7 +242,7 @@ module.exports = {
       },
     });
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -269,12 +269,12 @@ module.exports = {
       variables: {
         cartId: id,
         cancelUrl: "https://app.slack.com/client/TB51E9V4M/D038A7S1F0Q",
-        successUrl: `https://slerpdemo.com/checkout_loading/${id}`
+        successUrl: `https://slerp.com/checkout_loading/${id}`
       },
     });
 
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -303,7 +303,7 @@ module.exports = {
     });
 
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -343,7 +343,7 @@ module.exports = {
     });
 
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,
@@ -384,7 +384,7 @@ module.exports = {
       },
     });
     const response = await fetch(
-      'https://graph-qa.api.slerpdemo.com/v1/graphql',
+      'https://mobile.graph.api.slerp.com/v1/graphql',
       {
         method: 'post',
         body: data,

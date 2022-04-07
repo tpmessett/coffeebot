@@ -265,6 +265,7 @@ app.command("/menu", async ({ command, ack, say }) => {
     try {
       await ack();
       const open = await requests.checkOpen()
+        console.log(open)
         if (open.data.getValidStore == null || open.data.getValidStore == []) {
           say("Sorry we're closed right now")
         } else {
@@ -342,6 +343,7 @@ app.message(/(pay|checkout|done)/, async ({ body, client, logger, say }) => {
 app.message(/(hey|open|order|morning|afternoon|coffee|menu)/i, async ({ command, say }) => {
     try {
       const open = await requests.checkOpen()
+      console.log(open)
         if (open.data.getValidStore == null || open.data.getValidStore == []) {
           say("Sorry we're closed right now")
         } else {
