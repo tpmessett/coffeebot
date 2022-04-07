@@ -233,29 +233,37 @@ app.action({action_id: 'pay-click'},
   async ({ body, ack, logger, say }) => {
     await ack()
     try {
-      const cart = body.actions[0].value
-      const started = Date.now()
-      pollOrder = setInterval(payment, 3000)
-      function payment() {
-        const paid = gql.listenPayment(cart)
-        Promise.resolve(paid).then(function(result){
-          if(result.data.orders[0].status.toLowerCase() === 'accepted') {
-            const timeline = gql.getStoreInfo()
-            Promise.resolve(timeline).then(function(result){
-              say(`Great, your order has been accepted and will be ready in ${result} minutes`)
-            })
-            clearInterval(pollOrder)
-          }
-          if(result.data.orders[0].status.toLowerCase() === 'rejected') {
-            say("Ahh it looks like we can't fulfill your order right now, sorry, please do order again another time.")
-            clearInterval(pollOrder)
-          }
-          if (Date.now() - started > 600000) {
-            console.log("stop")
-            clearInterval(pollOrder);
-          }
+      const timeline = gql.getStoreInfo()
+        Promise.resolve(timeline).then(function(result){
+          cartId = ""
+          modifiers = []
+          say(`Once you've paid keep an eye on your email and your coffee should be ready in ${result} minutes`)
         })
-      }
+      // const cart = body.actions[0].value
+      // const started = Date.now()
+      // pollOrder = setInterval(payment, 3000)
+      // function payment() {
+      //   const paid = gql.listenPayment(cart)
+      //   Promise.resolve(paid).then(function(result){
+      //     if(result != []) {
+      //       if(result.data.orders[0].status.toLowerCase() === 'accepted') {
+      //         const timeline = gql.getStoreInfo()
+      //         Promise.resolve(timeline).then(function(result){
+      //           say(`Great, your order has been accepted and will be ready in ${result} minutes`)
+      //         })
+      //         clearInterval(pollOrder)
+      //       }
+      //       if(result.data.orders[0].status.toLowerCase() === 'rejected') {
+      //         say("Ahh it looks like we can't fulfill your order right now, sorry, please do order again another time.")
+      //         clearInterval(pollOrder)
+      //       }
+      //     }
+      //     if (Date.now() - started > 600000) {
+      //       console.log("stop")
+      //       clearInterval(pollOrder);
+      //     }
+      //   })
+      // }
     }
     catch (error) {
       logger.error(error);
@@ -382,11 +390,31 @@ app.message(/(slerp stand for|slerp meaning|slerp mean)/i, async ({ command, say
 app.message(/(most popular|best seller)/i, async ({ command, say}) => {
   try {
       const response = gql.getProdStats()
-      say("Ok here are the top 5:")
+      const leaderboard = {
+        blocks: [
+            {
+              type: "section",
+              text: {
+                type: "plain_text",
+                text: "OK, here are the top 5:",
+                emoji: true
+              }
+            }
+          ]
+        }
       Promise.resolve(response).then(function(topFive) {
          for (let i = 0; i < topFive.length; i++) {
-           say(`${i+1}) ${topFive[i].name} - ${topFive[i].total_count} sold`)
+           const block = {
+              type: "section",
+              text: {
+                type: "plain_text",
+                text: `${i + 1}) ${topFive[i].name} - ${topFive[i].total_count} sold`,
+                emoji: true
+              }
+            }
+            leaderboard.blocks.push(block)
          }
+         say(leaderboard)
       })
     } catch (error) {
         console.log("err")
